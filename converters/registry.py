@@ -13,6 +13,8 @@ SYNONYMS = {
     "jpeg": "jpg",
     "tif": "tiff",
     "txt": "text",
+    "xlsx": "excel",
+    "pptx": "powerpoint",
 }
 
 def normalize(fmt: str) -> str:
@@ -27,9 +29,10 @@ EXT_MAP = {
     "powerpoint": "pptx",
     "jpg": "jpeg",   # Pillow expects "JPEG"
     "text": "txt",
-    # Note: 'tif' and 'tiff' are preserved as user typed
+    # Preserve user choice for tif vs tiff (no remap needed)
 }
 
+# --- Allowed conversions (use canonical names on the left) ---
 # --- Allowed conversions (use canonical names on the left) ---
 ALLOWED = {
     # Image → PDF
@@ -39,6 +42,9 @@ ALLOWED = {
     ("webp", "pdf"): img_to_pdf,
     ("tiff", "pdf"): img_to_pdf,
     ("heic", "pdf"): img_to_pdf,
+    ("bmp", "pdf"): img_to_pdf,
+    ("ico", "pdf"): img_to_pdf,
+    ("avif", "pdf"): img_to_pdf,
 
     # Image → Image
     ("jpg", "png"): img_to_img,
@@ -49,10 +55,25 @@ ALLOWED = {
     ("webp", "png"): img_to_img,
     ("heic", "jpg"): img_to_img,
     ("heic", "png"): img_to_img,
+    ("bmp", "jpg"): img_to_img,
+    ("bmp", "png"): img_to_img,
+    ("ico", "png"): img_to_img,
+    ("avif", "jpg"): img_to_img,
+    ("avif", "png"): img_to_img,
+
+    # ✅ NEW: to TIFF (covers tif too via normalize())
+    ("jpg",  "tiff"): img_to_img,
+    ("png",  "tiff"): img_to_img,
+    ("gif",  "tiff"): img_to_img,
+    ("webp", "tiff"): img_to_img,
+    ("heic", "tiff"): img_to_img,
+    ("bmp",  "tiff"): img_to_img,
+    ("ico",  "tiff"): img_to_img,
+    ("avif", "tiff"): img_to_img,
 
     # PDF → Images (returns ZIP)
-    ("pdf", "jpg"): pdf_to_images_zip,
-    ("pdf", "png"): pdf_to_images_zip,
+    ("pdf", "jpg"):  pdf_to_images_zip,
+    ("pdf", "png"):  pdf_to_images_zip,
     ("pdf", "tiff"): pdf_to_images_zip,
 
     # PDF → Text
@@ -61,12 +82,14 @@ ALLOWED = {
     # EPS → PDF
     ("eps", "pdf"): eps_to_pdf,
 
-    # CSV → Excel
+    # CSV ↔ Excel
     ("csv", "excel"): pdf_to_excel,
 
     # Office ↔ PDF
     ("word", "pdf"): doc_to_pdf,
     ("pdf", "word"): pdf_to_docx,
+
+    # PDF → Excel / PowerPoint
     ("pdf", "excel"): pdf_to_excel,
     ("pdf", "powerpoint"): pdf_to_pptx,
 }
