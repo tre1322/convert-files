@@ -30,7 +30,7 @@ EXT_MAP = {
     # Note: 'tif' and 'tiff' are preserved as user typed
 }
 
-# --- Allowed conversions ---
+# --- Allowed conversions (use canonical names on the left) ---
 ALLOWED = {
     # Image → PDF
     ("jpg", "pdf"): img_to_pdf,
@@ -72,7 +72,7 @@ ALLOWED = {
 }
 
 def get_converter(key):
-    """Look up a converter function for a (from_type, to_type) pair."""
+    """Look up a converter function for a (from_type, to_type) pair, with normalization."""
     from_t, to_t = normalize(key[0]), normalize(key[1])
     fn = ALLOWED.get((from_t, to_t))
     if not fn:
