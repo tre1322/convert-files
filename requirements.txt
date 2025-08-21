@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+Pillow
+pillow-heif
+pdf2image
+pdfminer.six
+pdf2docx
+python-pptx
+pandas
+openpyxl
+camelot-py[cv]
+tabula-py
+apscheduler
