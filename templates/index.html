@@ -36,7 +36,13 @@
         <button class="btn btn-primary" id="convertBtn" type="submit">Convert</button>
       </div>
     </form>
-
+    <!-- Progress bar -->
+      <div id="progressWrap" class="d-none mt-3">
+        <div class="progress" role="progressbar" aria-label="Conversion progress" aria-valuemin="0" aria-valuemax="100">
+          <div id="progressBar" class="progress-bar" style="width: 0%">0%</div>
+        </div>
+        <div id="progressText" class="small text-muted mt-1"></div>
+      </div>
     <hr class="my-4">
     <div id="result" class="d-none">
       <a id="downloadLink" class="btn btn-success me-2" download>Download</a>

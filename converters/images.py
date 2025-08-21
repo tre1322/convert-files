@@ -20,3 +20,14 @@ def img_to_img(in_path: Path, out_path: Path):
 def img_to_pdf(in_path: Path, out_path: Path):
     img = _open_img(in_path)
     img.save(out_path, "PDF", resolution=300, save_all=False)
+
+def img_to_img(in_path: Path, out_path: Path):
+    img = _open_img(in_path)
+    ext = out_path.suffix.replace(".", "").upper()  # e.g., TIF, TIFF, JPG
+    if ext in ("JPG",):
+        fmt = "JPEG"
+    elif ext in ("TIF", "TIFF"):
+        fmt = "TIFF"
+    else:
+        fmt = ext
+    img.save(out_path, fmt)
