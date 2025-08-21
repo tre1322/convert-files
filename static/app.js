@@ -1,4 +1,38 @@
-// ------- Shared helpers -------
+// ------- Mime/extension map for accept filters -------
+function acceptFor(type) {
+  const t = (type || '').toLowerCase();
+  switch (t) {
+    // Images
+    case 'jpg': case 'jpeg': return '.jpg,.jpeg,image/jpeg';
+    case 'png':               return '.png,image/png';
+    case 'gif':               return '.gif,image/gif';
+    case 'webp':              return '.webp,image/webp';
+    case 'heic':              return '.heic,image/heif,image/heic';
+    case 'bmp':               return '.bmp,image/bmp';
+    case 'ico':               return '.ico,image/x-icon';
+    case 'tif': case 'tiff':  return '.tif,.tiff,image/tiff';
+    case 'avif':              return '.avif,image/avif';
+    case 'eps':               return '.eps,application/postscript';
+    // Documents
+    case 'pdf':               return '.pdf,application/pdf';
+    case 'word':              return '.docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword';
+    case 'excel':             return '.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel';
+    case 'powerpoint':        return '.pptx,.ppt,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint';
+    case 'csv':               return '.csv,text/csv';
+    case 'text':              return '.txt,text/plain';
+    default:                  return ''; // no filter
+  }
+}
+
+function toExt(value) {
+  const v = (value || '').toLowerCase();
+  if (v === 'word') return 'docx';
+  if (v === 'excel') return 'xlsx';
+  if (v === 'powerpoint') return 'pptx';
+  return v;
+}
+
+// ------- Progress helpers -------
 function setupProgress(ids) {
   const wrap = document.getElementById(ids.wrap);
   const bar  = document.getElementById(ids.bar);
@@ -31,14 +65,6 @@ function setupProgress(ids) {
   return { show, hide, setDeterminate, setIndeterminate };
 }
 
-function toExt(value) {
-  const v = (value || '').toLowerCase();
-  if (v === 'word') return 'docx';
-  if (v === 'excel') return 'xlsx';
-  if (v === 'powerpoint') return 'pptx';
-  return v;
-}
-
 // ------- Generic form handler -------
 function wireConverterForm(opts) {
   const form = document.getElementById(opts.formId);
@@ -47,25 +73,27 @@ function wireConverterForm(opts) {
   const fileInp = document.getElementById(opts.fileId);
   const progress = setupProgress(opts.progressIds);
 
-  const resultWrap = document.getElementById(opts.resultIds.wrap);
+  // Update file dialog filter when "From" changes (and on load)
+  function setAcceptFromSelect() {
+    fileInp.setAttribute('accept', acceptFor(fromSel.value));
+  }
+  fromSel.addEventListener('change', setAcceptFromSelect);
+  setAcceptFromSelect(); // initial
+
+  const resultWrap   = document.getElementById(opts.resultIds.wrap);
   const downloadLink = document.getElementById(opts.resultIds.download);
   const previewImg   = opts.resultIds.preview ? document.getElementById(opts.resultIds.preview) : null;
   const copyBtn      = opts.resultIds.copy ? document.getElementById(opts.resultIds.copy) : null;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!fileInp.files.length) {
-      alert('Please choose a file.');
-      return;
-    }
+    if (!fileInp.files.length) { alert('Please choose a file.'); return; }
 
-    // Build form data
     const fd = new FormData();
     fd.append('from_type', fromSel.value.toLowerCase());
     fd.append('to_type', toSel.value.toLowerCase());
     fd.append('file', fileInp.files[0]);
 
-    // Upload via XHR for progress
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/convert');
     xhr.responseType = 'blob';
@@ -73,22 +101,15 @@ function wireConverterForm(opts) {
     progress.show();
 
     xhr.upload.onprogress = (evt) => {
-      if (evt.lengthComputable) {
-        progress.setDeterminate((evt.loaded / evt.total) * 100, 'Uploading…');
-      } else {
-        progress.setDeterminate(50, 'Uploading…');
-      }
+      if (evt.lengthComputable) progress.setDeterminate((evt.loaded / evt.total) * 100, 'Uploading…');
+      else                       progress.setDeterminate(50, 'Uploading…');
     };
     xhr.upload.onload = () => progress.setIndeterminate('Processing on server…');
 
-    xhr.onerror = () => {
-      progress.hide();
-      alert('Network error while uploading. Please try again.');
-    };
+    xhr.onerror = () => { progress.hide(); alert('Network error while uploading. Please try again.'); };
 
     xhr.onreadystatechange = () => {
       if (xhr.readyState !== 4) return;
-
       progress.hide();
 
       if (xhr.status < 200 || xhr.status >= 300) {
@@ -114,7 +135,6 @@ function wireConverterForm(opts) {
       downloadLink.download = isZip ? 'converted.zip' : `converted.${ext}`;
       resultWrap.classList.remove('d-none');
 
-      // Images box may preview and copy single-image outputs.
       if (opts.enablePreview) {
         const isImage = ['png','jpg','jpeg','webp','gif','tif','tiff','bmp','ico','avif'].includes(ext) && !isZip;
         if (isImage && previewImg && copyBtn) {
@@ -126,9 +146,7 @@ function wireConverterForm(opts) {
               await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
               copyBtn.textContent = 'Copied!';
               setTimeout(() => (copyBtn.textContent = 'Copy image to clipboard'), 1500);
-            } catch {
-              alert('Clipboard copy not supported in this browser.');
-            }
+            } catch { alert('Clipboard copy not supported in this browser.'); }
           };
         } else if (previewImg && copyBtn) {
           previewImg.classList.add('d-none');
@@ -157,7 +175,7 @@ wireConverterForm({
   fromId: 'docFrom',
   toId: 'docTo',
   fileId: 'docFile',
-  enablePreview: false, // docs don't preview
+  enablePreview: false,
   progressIds: { wrap: 'docProgressWrap', bar: 'docProgressBar', text: 'docProgressText' },
   resultIds: { wrap: 'docResult', download: 'docDownloadLink' }
 });
