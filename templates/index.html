@@ -5,41 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Convert Files</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .dropzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: .5rem;
+      background: #f8fafc;
+      padding: 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .dropzone.dragover {
+      background: #eef2ff;
+      border-color: #6366f1;
+    }
+    .file-chip {
+      display: inline-block; padding: .25rem .5rem; border-radius: 999px;
+      background: #e2e8f0; font-size: .9rem;
+    }
+  </style>
 </head>
 <body class="bg-light">
   <div class="container py-4" style="max-width: 980px;">
     <header class="mb-4">
       <h1 class="h3 mb-1">Convert Files</h1>
-      <p class="text-muted mb-0">Use the Images box for image formats and the Documents box for office/text formats.</p>
+      <p class="text-muted mb-0">Drag & drop or browse a file, pick what to convert <em>to</em>, then convert.</p>
     </header>
 
-    <!-- ========================= IMAGES CONVERTER ========================= -->
+    <!-- ========================= IMAGES ========================= -->
     <form id="imageForm" class="card shadow-sm mb-4">
       <div class="card-header bg-white">
         <strong>Images</strong>
       </div>
       <div class="card-body">
         <div class="row g-3">
-          <!-- FROM (Images) -->
+          <!-- Convert To (Images) -->
           <div class="col-md-6">
-            <label class="form-label">From</label>
-            <select id="imgFrom" class="form-select" required>
-              <optgroup label="Images">
-                <option>png</option><option>jpg</option><option>jpeg</option>
-                <option>tif</option><option>tiff</option><option>gif</option>
-                <option>webp</option><option>heic</option><option>bmp</option>
-                <option>avif</option><option>ico</option>
-                <option>eps</option>
-              </optgroup>
-              <optgroup label="Bridge">
-                <option>pdf</option> <!-- allows pdf -> images -->
-              </optgroup>
-            </select>
-          </div>
-
-          <!-- TO (Images) -->
-          <div class="col-md-6">
-            <label class="form-label">To</label>
+            <label class="form-label">Convert To</label>
             <select id="imgTo" class="form-select" required>
               <optgroup label="Images">
                 <option>png</option><option>jpg</option><option>jpeg</option>
@@ -47,22 +49,27 @@
                 <option>webp</option><option>bmp</option><option>ico</option>
               </optgroup>
               <optgroup label="PDF Output">
-                <option>pdf</option> <!-- image → PDF, or PDF → images (returns ZIP) -->
+                <option>pdf</option> <!-- image → PDF, or PDF → images (ZIP) -->
               </optgroup>
             </select>
           </div>
 
-          <!-- FILE (Images) -->
-          <div class="col-12">
-            <label for="imgFile" class="form-label">File</label>
-            <input id="imgFile" class="form-control" type="file" required />
+          <!-- Drop/Browse (Images) -->
+          <div class="col-md-6">
+            <label class="form-label">Your File</label>
+            <div id="imgDrop" class="dropzone">
+              <div><strong>Drag & drop image/pdf here</strong></div>
+              <div class="text-muted small">or click to browse…</div>
+              <div id="imgPicked" class="mt-2 d-none"><span class="file-chip"></span></div>
+            </div>
+            <input id="imgFile" type="file" class="form-control d-none" />
             <div class="form-text">Max size: 50 MB.</div>
           </div>
         </div>
 
-        <!-- Progress bar (Images) -->
+        <!-- Progress -->
         <div id="imgProgressWrap" class="d-none mt-3">
-          <div class="progress" role="progressbar" aria-label="Image conversion progress" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress" role="progressbar" aria-label="Image conversion" aria-valuemin="0" aria-valuemax="100">
             <div id="imgProgressBar" class="progress-bar" style="width: 0%">0%</div>
           </div>
           <div id="imgProgressText" class="small text-muted mt-1"></div>
@@ -86,42 +93,38 @@
       <hr class="my-4"/>
     </section>
 
-    <!-- ========================= DOCUMENTS CONVERTER ========================= -->
+    <!-- ========================= DOCUMENTS ========================= -->
     <form id="docForm" class="card shadow-sm">
       <div class="card-header bg-white">
         <strong>Documents</strong>
       </div>
       <div class="card-body">
         <div class="row g-3">
-          <!-- FROM (Docs) -->
+          <!-- Convert To (Docs) -->
           <div class="col-md-6">
-            <label class="form-label">From</label>
-            <select id="docFrom" class="form-select" required>
-              <option>pdf</option><option>word</option><option>excel</option>
-              <option>csv</option><option>text</option>
-            </select>
-          </div>
-
-          <!-- TO (Docs) -->
-          <div class="col-md-6">
-            <label class="form-label">To</label>
+            <label class="form-label">Convert To</label>
             <select id="docTo" class="form-select" required>
               <option>pdf</option><option>word</option><option>excel</option>
               <option>powerpoint</option><option>text</option>
             </select>
           </div>
 
-          <!-- FILE (Docs) -->
-          <div class="col-12">
-            <label for="docFile" class="form-label">File</label>
-            <input id="docFile" class="form-control" type="file" required />
+          <!-- Drop/Browse (Docs) -->
+          <div class="col-md-6">
+            <label class="form-label">Your File</label>
+            <div id="docDrop" class="dropzone">
+              <div><strong>Drag & drop document here</strong></div>
+              <div class="text-muted small">or click to browse…</div>
+              <div id="docPicked" class="mt-2 d-none"><span class="file-chip"></span></div>
+            </div>
+            <input id="docFile" type="file" class="form-control d-none" />
             <div class="form-text">Max size: 50 MB.</div>
           </div>
         </div>
 
-        <!-- Progress bar (Docs) -->
+        <!-- Progress -->
         <div id="docProgressWrap" class="d-none mt-3">
-          <div class="progress" role="progressbar" aria-label="Document conversion progress" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress" role="progressbar" aria-label="Document conversion" aria-valuemin="0" aria-valuemax="100">
             <div id="docProgressBar" class="progress-bar" style="width: 0%">0%</div>
           </div>
           <div id="docProgressText" class="small text-muted mt-1"></div>
