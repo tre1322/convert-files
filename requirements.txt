@@ -11,3 +11,4 @@ openpyxl
 camelot-py[cv]
 tabula-py
 apscheduler
+python-multipart
