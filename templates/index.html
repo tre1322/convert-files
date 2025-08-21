@@ -7,65 +7,124 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
 <body class="bg-light">
-  <div class="container py-4" style="max-width: 880px;">
+  <div class="container py-4" style="max-width: 980px;">
     <header class="mb-4">
       <h1 class="h3 mb-1">Convert Files</h1>
-      <p class="text-muted mb-0">Choose a source format, a target format, upload your file, and convert.</p>
+      <p class="text-muted mb-0">Use the Images box for image formats and the Documents box for office/text formats.</p>
     </header>
 
-    <form id="convertForm" class="card shadow-sm">
+    <!-- ========================= IMAGES CONVERTER ========================= -->
+    <form id="imageForm" class="card shadow-sm mb-4">
+      <div class="card-header bg-white">
+        <strong>Images</strong>
+      </div>
       <div class="card-body">
         <div class="row g-3">
-          <!-- FROM -->
+          <!-- FROM (Images) -->
           <div class="col-md-6">
             <label class="form-label">From</label>
-            <select id="from" class="form-select" required>
+            <select id="imgFrom" class="form-select" required>
               <optgroup label="Images">
                 <option>png</option><option>jpg</option><option>jpeg</option>
                 <option>tif</option><option>tiff</option><option>gif</option>
                 <option>webp</option><option>heic</option><option>bmp</option>
                 <option>avif</option><option>ico</option>
                 <option>eps</option>
-                <option>pdf</option> <!-- bridge: allows pdf->image -->
               </optgroup>
-              <optgroup label="Documents">
-                <option>pdf</option><option>word</option><option>excel</option>
-                <option>csv</option><option>text</option>
+              <optgroup label="Bridge">
+                <option>pdf</option> <!-- allows pdf -> images -->
               </optgroup>
             </select>
           </div>
 
-          <!-- TO -->
+          <!-- TO (Images) -->
           <div class="col-md-6">
             <label class="form-label">To</label>
-            <select id="to" class="form-select" required>
+            <select id="imgTo" class="form-select" required>
               <optgroup label="Images">
                 <option>png</option><option>jpg</option><option>jpeg</option>
                 <option>tif</option><option>tiff</option><option>gif</option>
                 <option>webp</option><option>bmp</option><option>ico</option>
-                <option>pdf</option> <!-- image→PDF -->
               </optgroup>
-              <optgroup label="Documents">
-                <option>pdf</option><option>word</option><option>excel</option>
-                <option>powerpoint</option><option>text</option>
+              <optgroup label="PDF Output">
+                <option>pdf</option> <!-- image → PDF, or PDF → images (returns ZIP) -->
               </optgroup>
             </select>
           </div>
 
-          <!-- FILE -->
+          <!-- FILE (Images) -->
           <div class="col-12">
-            <label for="file" class="form-label">File</label>
-            <input id="file" class="form-control" type="file" required />
-            <div class="form-text">Max size: 50 MB. Supported types depend on your selected From/To.</div>
+            <label for="imgFile" class="form-label">File</label>
+            <input id="imgFile" class="form-control" type="file" required />
+            <div class="form-text">Max size: 50 MB.</div>
           </div>
         </div>
 
-        <!-- Progress bar -->
-        <div id="progressWrap" class="d-none mt-3">
-          <div class="progress" role="progressbar" aria-label="Conversion progress" aria-valuemin="0" aria-valuemax="100">
-            <div id="progressBar" class="progress-bar" style="width: 0%">0%</div>
+        <!-- Progress bar (Images) -->
+        <div id="imgProgressWrap" class="d-none mt-3">
+          <div class="progress" role="progressbar" aria-label="Image conversion progress" aria-valuemin="0" aria-valuemax="100">
+            <div id="imgProgressBar" class="progress-bar" style="width: 0%">0%</div>
           </div>
-          <div id="progressText" class="small text-muted mt-1"></div>
+          <div id="imgProgressText" class="small text-muted mt-1"></div>
+        </div>
+      </div>
+
+      <div class="card-footer d-flex justify-content-end">
+        <button class="btn btn-primary" type="submit">Convert Image</button>
+      </div>
+    </form>
+
+    <!-- Result (Images) -->
+    <section id="imgResult" class="d-none mb-5">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <a id="imgDownloadLink" class="btn btn-success" download>Download</a>
+        <button id="imgCopyBtn" class="btn btn-outline-secondary d-none">Copy image to clipboard</button>
+      </div>
+      <div class="mt-3">
+        <img id="imgPreview" class="img-fluid d-none" alt="Preview" />
+      </div>
+      <hr class="my-4"/>
+    </section>
+
+    <!-- ========================= DOCUMENTS CONVERTER ========================= -->
+    <form id="docForm" class="card shadow-sm">
+      <div class="card-header bg-white">
+        <strong>Documents</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- FROM (Docs) -->
+          <div class="col-md-6">
+            <label class="form-label">From</label>
+            <select id="docFrom" class="form-select" required>
+              <option>pdf</option><option>word</option><option>excel</option>
+              <option>csv</option><option>text</option>
+            </select>
+          </div>
+
+          <!-- TO (Docs) -->
+          <div class="col-md-6">
+            <label class="form-label">To</label>
+            <select id="docTo" class="form-select" required>
+              <option>pdf</option><option>word</option><option>excel</option>
+              <option>powerpoint</option><option>text</option>
+            </select>
+          </div>
+
+          <!-- FILE (Docs) -->
+          <div class="col-12">
+            <label for="docFile" class="form-label">File</label>
+            <input id="docFile" class="form-control" type="file" required />
+            <div class="form-text">Max size: 50 MB.</div>
+          </div>
+        </div>
+
+        <!-- Progress bar (Docs) -->
+        <div id="docProgressWrap" class="d-none mt-3">
+          <div class="progress" role="progressbar" aria-label="Document conversion progress" aria-valuemin="0" aria-valuemax="100">
+            <div id="docProgressBar" class="progress-bar" style="width: 0%">0%</div>
+          </div>
+          <div id="docProgressText" class="small text-muted mt-1"></div>
         </div>
 
         <!-- Disclaimer -->
@@ -75,20 +134,14 @@
       </div>
 
       <div class="card-footer d-flex justify-content-end">
-        <button id="convertBtn" class="btn btn-primary" type="submit">Convert</button>
+        <button class="btn btn-primary" type="submit">Convert Document</button>
       </div>
     </form>
 
-    <hr class="my-4" />
-
-    <!-- Result -->
-    <section id="result" class="d-none">
+    <!-- Result (Docs) -->
+    <section id="docResult" class="d-none my-4">
       <div class="d-flex flex-wrap align-items-center gap-2">
-        <a id="downloadLink" class="btn btn-success" download>Download</a>
-        <button id="copyBtn" class="btn btn-outline-secondary d-none">Copy image to clipboard</button>
-      </div>
-      <div class="mt-3">
-        <img id="preview" class="img-fluid d-none" alt="Preview" />
+        <a id="docDownloadLink" class="btn btn-success" download>Download</a>
       </div>
     </section>
   </div>
