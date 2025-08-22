@@ -1,108 +1,147 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Convert Files</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
-    body {
-      padding: 20px;
-      background-color: #f8f9fa;
-    }
-    .converter-section {
-      display: flex;
-      gap: 30px; /* adds more gap between Images and Documents */
-      justify-content: flex-start;
-    }
-    .converter-box {
-      flex: 0 0 48%; /* make both sections equal width, no stretching */
-      max-width: 48%;
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-    .drop-zone {
-      border: 2px dashed #ccc;
-      border-radius: 6px;
-      padding: 25px;
+    .dropzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: .5rem;
+      background: #f8fafc;
+      padding: 18px;
       text-align: center;
       cursor: pointer;
-      transition: border-color 0.2s;
-      background: #fafafa;
-      margin-bottom: 15px;
+      transition: background .15s, border-color .15s;
+      height: 100%;
+      display: flex; flex-direction: column; justify-content: center;
     }
-    .drop-zone.dragover {
-      border-color: #007bff;
-      background: #e9f5ff;
-    }
-    .note-box {
-      font-size: 0.9rem;
-      color: #555;
-      background: #fff8e1;
-      border: 1px solid #ffe58f;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 10px;
-    }
+    .dropzone.dragover { background: #eef2ff; border-color: #6366f1; }
+    .file-chip { display: inline-block; padding: .25rem .5rem; border-radius: 999px; background: #e2e8f0; font-size: .9rem; }
+    @media (min-width: 992px){ .card-equal { height: 100%; } }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h2 class="mb-4">Convert Files</h2>
-    <p class="text-muted">Drag & drop or browse a file, pick what to convert <b>to</b>, then convert.</p>
-    
-    <div class="converter-section">
-      <!-- Images -->
-      <div class="converter-box">
-        <h5>Images</h5>
-        <label class="form-label">Your File</label>
-        <div class="drop-zone" id="image-drop-zone">
-          Drag & drop image/pdf here<br>or click to browse…
-        </div>
-        <small class="text-muted">Max size: 50 MB.</small>
-        <br><br>
-        <label class="form-label">Convert To</label>
-        <select class="form-select" id="image-to">
-          <option value="png">png</option>
-          <option value="jpg">jpg</option>
-          <option value="tif">tif</option>
-          <option value="gif">gif</option>
-          <option value="webp">webp</option>
-          <option value="heic">heic</option>
-          <option value="pdf">pdf</option>
-          <option value="eps">eps</option>
-        </select>
-        <br>
-        <button class="btn btn-primary w-100">Convert Image</button>
+<body class="bg-light">
+  <div class="container py-4" style="max-width: 1200px;">
+    <header class="mb-4">
+      <h1 class="h3 mb-1">Convert Files</h1>
+      <p class="text-muted mb-0">Drag & drop or browse a file, pick what to convert <em>to</em>, then convert.</p>
+    </header>
+
+    <div class="row g-4">
+      <!-- ========================= IMAGES (LEFT) ========================= -->
+      <div class="col-12 col-lg-6">
+        <form id="imageForm" class="card shadow-sm card-equal">
+          <div class="card-header bg-white"><strong>Images</strong></div>
+          <div class="card-body">
+            <div class="row g-3 align-items-stretch">
+              <!-- Drop/Browse (left) -->
+              <div class="col-md-6">
+                <label class="form-label">Your File</label>
+                <div id="imgDrop" class="dropzone">
+                  <div><strong>Drag & drop image/pdf here</strong></div>
+                  <div class="text-muted small">or click to browse…</div>
+                  <div id="imgPicked" class="mt-2 d-none"><span class="file-chip"></span></div>
+                </div>
+                <!-- Hidden input that the dropzone controls -->
+                <input id="imgFile" type="file" class="d-none" />
+                <div class="form-text">Max size: 50 MB.</div>
+              </div>
+
+              <!-- Convert To (right) -->
+              <div class="col-md-6">
+                <label class="form-label">Convert To</label>
+                <select id="imgTo" class="form-select" required>
+                  <optgroup label="Images">
+                    <option>png</option><option>jpg</option><option>jpeg</option>
+                    <option>tif</option><option>tiff</option><option>gif</option>
+                    <option>webp</option><option>bmp</option><option>ico</option>
+                  </optgroup>
+                  <optgroup label="PDF Output"><option>pdf</option></optgroup>
+                </select>
+
+                <!-- Progress -->
+                <div id="imgProgressWrap" class="d-none mt-3">
+                  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                    <div id="imgProgressBar" class="progress-bar" style="width:0%">0%</div>
+                  </div>
+                  <div id="imgProgressText" class="small text-muted mt-1"></div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-3">
+                  <button class="btn btn-primary" type="submit">Convert Image</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Result (Images) -->
+        <section id="imgResult" class="d-none my-3">
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <a id="imgDownloadLink" class="btn btn-success" download>Download</a>
+            <button id="imgCopyBtn" class="btn btn-outline-secondary d-none">Copy image to clipboard</button>
+          </div>
+          <div class="mt-3"><img id="imgPreview" class="img-fluid d-none" alt="Preview" /></div>
+        </section>
       </div>
 
-      <!-- Documents -->
-      <div class="converter-box">
-        <h5>Documents</h5>
-        <label class="form-label">Your File</label>
-        <div class="drop-zone" id="doc-drop-zone">
-          Drag & drop document here<br>or click to browse…
-        </div>
-        <small class="text-muted">Max size: 50 MB.</small>
-        <br><br>
-        <label class="form-label">Convert To</label>
-        <select class="form-select" id="doc-to">
-          <option value="pdf">pdf</option>
-          <option value="docx">word</option>
-          <option value="xlsx">excel</option>
-          <option value="pptx">powerpoint</option>
-          <option value="csv">csv</option>
-        </select>
-        <div class="note-box">
-          <b>Note:</b> PDF→Word/Excel/PowerPoint are <i>best effort</i> and may alter layout.
-        </div>
-        <br>
-        <button class="btn btn-primary w-100">Convert Document</button>
+      <!-- ========================= DOCUMENTS (RIGHT) ========================= -->
+      <div class="col-12 col-lg-6">
+        <form id="docForm" class="card shadow-sm card-equal">
+          <div class="card-header bg-white"><strong>Documents</strong></div>
+          <div class="card-body">
+            <div class="row g-3 align-items-stretch">
+              <!-- Drop/Browse (left) -->
+              <div class="col-md-6">
+                <label class="form-label">Your File</label>
+                <div id="docDrop" class="dropzone">
+                  <div><strong>Drag & drop document here</strong></div>
+                  <div class="text-muted small">or click to browse…</div>
+                  <div id="docPicked" class="mt-2 d-none"><span class="file-chip"></span></div>
+                </div>
+                <input id="docFile" type="file" class="d-none" />
+                <div class="form-text">Max size: 50 MB.</div>
+              </div>
+
+              <!-- Convert To (right) -->
+              <div class="col-md-6">
+                <label class="form-label">Convert To</label>
+                <select id="docTo" class="form-select" required>
+                  <option>pdf</option><option>word</option><option>excel</option>
+                  <option>powerpoint</option><option>text</option>
+                </select>
+
+                <div id="docProgressWrap" class="d-none mt-3">
+                  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                    <div id="docProgressBar" class="progress-bar" style="width:0%">0%</div>
+                  </div>
+                  <div id="docProgressText" class="small text-muted mt-1"></div>
+                </div>
+
+                <div class="alert alert-warning mt-3 mb-0" role="alert" style="font-size:0.95rem">
+                  <strong>Note:</strong> PDF→Word/Excel/PowerPoint are <em>best effort</em> and may alter layout.
+                </div>
+
+                <div class="d-flex justify-content-end mt-3">
+                  <button class="btn btn-primary" type="submit">Convert Document</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Result (Docs) -->
+        <section id="docResult" class="d-none my-3">
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <a id="docDownloadLink" class="btn btn-success" download>Download</a>
+          </div>
+        </section>
       </div>
     </div>
   </div>
+
+  <script src="/static/app.js"></script>
 </body>
 </html>
-

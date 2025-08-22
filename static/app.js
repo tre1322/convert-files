@@ -1,80 +1,67 @@
-// ---------- Accept filters for pickers ----------
+// -------- accept filters for the hidden inputs --------
 function acceptForGroup(group) {
   if (group === 'image') {
     return [
       '.png','.jpg','.jpeg','.tif','.tiff','.gif','.webp','.heic','.bmp','.ico','.avif','.pdf','.eps'
     ].join(',');
   }
-  // docs
   return [
     '.pdf','.docx','.doc','.xlsx','.xls','.pptx','.ppt','.csv','.txt'
   ].join(',');
 }
 
-function toExt(value) {
-  const v = (value || '').toLowerCase();
+function toExt(v) {
+  v = (v || '').toLowerCase();
   if (v === 'word') return 'docx';
   if (v === 'excel') return 'xlsx';
   if (v === 'powerpoint') return 'pptx';
   return v;
 }
 
-// ---------- Progress helpers ----------
+// -------- progress helpers --------
 function setupProgress(ids) {
   const wrap = document.getElementById(ids.wrap);
   const bar  = document.getElementById(ids.bar);
   const text = document.getElementById(ids.text);
-  function show() { wrap.classList.remove('d-none'); setDeterminate(0, 'Starting upload…'); }
-  function hide() {
-    wrap.classList.add('d-none');
-    bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
-    bar.style.width = '0%'; bar.textContent = '0%'; text.textContent = '';
-  }
-  function setDeterminate(pct, label) {
-    bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
-    const p = Math.max(0, Math.min(100, Math.round(pct)));
-    bar.style.width = `${p}%`; bar.textContent = `${p}%`; text.textContent = label || '';
-  }
-  function setIndeterminate(label) {
-    bar.classList.add('progress-bar-striped', 'progress-bar-animated');
-    bar.style.width = '100%'; bar.textContent = ''; text.textContent = label || 'Processing…';
-  }
+  function show(){ wrap.classList.remove('d-none'); setDeterminate(0,'Starting upload…'); }
+  function hide(){ wrap.classList.add('d-none'); bar.classList.remove('progress-bar-striped','progress-bar-animated'); bar.style.width='0%'; bar.textContent='0%'; text.textContent=''; }
+  function setDeterminate(p,label){ bar.classList.remove('progress-bar-striped','progress-bar-animated'); const p2=Math.max(0,Math.min(100,Math.round(p))); bar.style.width=`${p2}%`; bar.textContent=`${p2}%`; text.textContent=label||''; }
+  function setIndeterminate(label){ bar.classList.add('progress-bar-striped','progress-bar-animated'); bar.style.width='100%'; bar.textContent=''; text.textContent=label||'Processing…'; }
   return { show, hide, setDeterminate, setIndeterminate };
 }
 
-// ---------- Drag/drop wiring ----------
+// -------- wire a dropzone to a hidden input --------
 function wireDropzone(zoneId, fileInputId, pickedId, accept) {
   const zone = document.getElementById(zoneId);
   const input = document.getElementById(fileInputId);
   const picked = document.getElementById(pickedId);
   const chip = picked.querySelector('.file-chip');
 
+  // make file dialog open when clicking the zone
   input.setAttribute('accept', accept);
-
-  function setFile(file) {
-    // Assign file to the hidden input so FormData picks it up
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    input.files = dt.files;
-    chip.textContent = `${file.name} (${Math.round(file.size/1024)} KB)`;
-    picked.classList.remove('d-none');
-  }
-
   zone.addEventListener('click', () => input.click());
   input.addEventListener('change', () => {
-    if (input.files && input.files[0]) setFile(input.files[0]);
+    if (!input.files || !input.files[0]) return;
+    chip.textContent = `${input.files[0].name} (${Math.round(input.files[0].size/1024)} KB)`;
+    picked.classList.remove('d-none');
   });
 
+  // handle drag & drop
   zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
   zone.addEventListener('drop', (e) => {
     e.preventDefault(); zone.classList.remove('dragover');
     if (!e.dataTransfer.files.length) return;
-    setFile(e.dataTransfer.files[0]);
+    // assign into the hidden input so FormData sees it
+    const dt = new DataTransfer();
+    dt.items.add(e.dataTransfer.files[0]);
+    input.files = dt.files;
+    chip.textContent = `${input.files[0].name} (${Math.round(input.files[0].size/1024)} KB)`;
+    picked.classList.remove('d-none');
   });
 }
 
-// ---------- Generic submit handler (no from_type; backend auto-detects) ----------
+// -------- submit handler (backend auto-detects "from" type) --------
 function wireConverterForm(opts) {
   const form = document.getElementById(opts.formId);
   const toSel = document.getElementById(opts.toId);
@@ -86,13 +73,13 @@ function wireConverterForm(opts) {
   const previewImg = opts.resultIds.preview ? document.getElementById(opts.resultIds.preview) : null;
   const copyBtn = opts.resultIds.copy ? document.getElementById(opts.resultIds.copy) : null;
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  form.addEventListener('submit', () => {
+    // prevent default submit
+    event.preventDefault();
     if (!fileInp.files.length) { alert('Please choose or drop a file.'); return; }
 
     const fd = new FormData();
-    // from_type omitted; server will infer
-    fd.append('to_type', toSel.value.toLowerCase());
+    fd.append('to_type', toSel.value.toLowerCase()); // backend infers the from_type
     fd.append('file', fileInp.files[0]);
 
     const xhr = new XMLHttpRequest();
@@ -113,20 +100,16 @@ function wireConverterForm(opts) {
 
       if (xhr.status < 200 || xhr.status >= 300) {
         try {
-          const decoder = new TextDecoder();
-          const txt = decoder.decode(xhr.response);
+          const txt = new TextDecoder().decode(xhr.response);
           alert(`Conversion failed.\n${txt || `Status ${xhr.status}`}`);
-        } catch {
-          alert(`Conversion failed. Status ${xhr.status}`);
-        }
+        } catch { alert(`Conversion failed. Status ${xhr.status}`); }
         return;
       }
 
       const blob = xhr.response;
       const url = URL.createObjectURL(blob);
-      const ext = toExt(toSel.value.toLowerCase());
-      const contentType = xhr.getResponseHeader('Content-Type') || '';
-      const isZip = contentType.includes('zip');
+      const ext = toExt(toSel.value);
+      const isZip = (xhr.getResponseHeader('Content-Type') || '').includes('zip');
 
       downloadLink.href = url;
       downloadLink.download = isZip ? 'converted.zip' : `converted.${ext}`;
@@ -143,7 +126,7 @@ function wireConverterForm(opts) {
               await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
               copyBtn.textContent = 'Copied!';
               setTimeout(() => (copyBtn.textContent = 'Copy image to clipboard'), 1500);
-            } catch { alert('Clipboard copy not supported.'); }
+            } catch { alert('Clipboard copy not supported in this browser.'); }
           };
         } else if (previewImg && copyBtn) {
           previewImg.classList.add('d-none');
@@ -156,11 +139,10 @@ function wireConverterForm(opts) {
   });
 }
 
-// Wire dropzones
+// ---- wire everything ----
 wireDropzone('imgDrop', 'imgFile', 'imgPicked', acceptForGroup('image'));
 wireDropzone('docDrop', 'docFile', 'docPicked', acceptForGroup('doc'));
 
-// Wire submit handlers
 wireConverterForm({
   formId: 'imageForm',
   toId: 'imgTo',
