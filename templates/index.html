@@ -44,8 +44,8 @@
                   <div class="text-muted small">or click to browse…</div>
                   <div id="imgPicked" class="mt-2 d-none"><span class="file-chip"></span></div>
                 </div>
-                <!-- Hidden input that the dropzone controls -->
-                <input id="imgFile" type="file" class="d-none" />
+                <!-- IMPORTANT: use visually-hidden (not display:none) so input.click() works -->
+                <input id="imgFile" type="file" class="visually-hidden" />
                 <div class="form-text">Max size: 50 MB.</div>
               </div>
 
@@ -101,7 +101,7 @@
                   <div class="text-muted small">or click to browse…</div>
                   <div id="docPicked" class="mt-2 d-none"><span class="file-chip"></span></div>
                 </div>
-                <input id="docFile" type="file" class="d-none" />
+                <input id="docFile" type="file" class="visually-hidden" />
                 <div class="form-text">Max size: 50 MB.</div>
               </div>
 

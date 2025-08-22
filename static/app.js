@@ -37,22 +37,23 @@ function wireDropzone(zoneId, fileInputId, pickedId, accept) {
   const picked = document.getElementById(pickedId);
   const chip = picked.querySelector('.file-chip');
 
-  // make file dialog open when clicking the zone
   input.setAttribute('accept', accept);
+
+  // Click to open file dialog (works because input is rendered with 'visually-hidden')
   zone.addEventListener('click', () => input.click());
+
   input.addEventListener('change', () => {
     if (!input.files || !input.files[0]) return;
     chip.textContent = `${input.files[0].name} (${Math.round(input.files[0].size/1024)} KB)`;
     picked.classList.remove('d-none');
   });
 
-  // handle drag & drop
+  // Drag & drop
   zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
   zone.addEventListener('drop', (e) => {
     e.preventDefault(); zone.classList.remove('dragover');
     if (!e.dataTransfer.files.length) return;
-    // assign into the hidden input so FormData sees it
     const dt = new DataTransfer();
     dt.items.add(e.dataTransfer.files[0]);
     input.files = dt.files;
@@ -73,13 +74,12 @@ function wireConverterForm(opts) {
   const previewImg = opts.resultIds.preview ? document.getElementById(opts.resultIds.preview) : null;
   const copyBtn = opts.resultIds.copy ? document.getElementById(opts.resultIds.copy) : null;
 
-  form.addEventListener('submit', () => {
-    // prevent default submit
-    event.preventDefault();
+  form.addEventListener('submit', (e) => {
+    e.preventDefault(); // ✅ use the event arg
     if (!fileInp.files.length) { alert('Please choose or drop a file.'); return; }
 
     const fd = new FormData();
-    fd.append('to_type', toSel.value.toLowerCase()); // backend infers the from_type
+    fd.append('to_type', toSel.value.toLowerCase()); // backend infers from_type
     fd.append('file', fileInp.files[0]);
 
     const xhr = new XMLHttpRequest();
