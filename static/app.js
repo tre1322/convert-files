@@ -1,13 +1,11 @@
-// -------- accept filters for the hidden inputs --------
+// ---------- accept filters ----------
 function acceptForGroup(group) {
   if (group === 'image') {
     return [
-      '.png','.jpg','.jpeg','.tif','.tiff','.gif','.webp','.heic','.bmp','.ico','.avif','.pdf','.eps'
+      '.png','.jpg','.jpeg','.tif','.tiff','.gif','.webp','.heic','.bmp','.ico','.avif','.pdf'
     ].join(',');
   }
-  return [
-    '.pdf','.docx','.doc','.xlsx','.xls','.pptx','.ppt','.csv','.txt'
-  ].join(',');
+  return ['.pdf','.docx','.doc','.xlsx','.xls','.pptx','.ppt','.csv','.txt'].join(',');
 }
 
 function toExt(v) {
@@ -18,7 +16,7 @@ function toExt(v) {
   return v;
 }
 
-// -------- progress helpers --------
+// ---------- progress ----------
 function setupProgress(ids) {
   const wrap = document.getElementById(ids.wrap);
   const bar  = document.getElementById(ids.bar);
@@ -30,39 +28,43 @@ function setupProgress(ids) {
   return { show, hide, setDeterminate, setIndeterminate };
 }
 
-// -------- wire a dropzone to a hidden input --------
-function wireDropzone(zoneId, fileInputId, pickedId, accept) {
-  const zone = document.getElementById(zoneId);
-  const input = document.getElementById(fileInputId);
+// ---------- dropzone wiring ----------
+function wireDropzone({zoneId, browseId, inputId, pickedId, accept}) {
+  const zone   = document.getElementById(zoneId);
+  const browse = document.getElementById(browseId);
+  const input  = document.getElementById(inputId);
   const picked = document.getElementById(pickedId);
-  const chip = picked.querySelector('.file-chip');
 
   input.setAttribute('accept', accept);
 
-  // Click to open file dialog (works because input is rendered with 'visually-hidden')
-  zone.addEventListener('click', () => input.click());
+  // click to browse
+  const openDialog = () => input.click();
+  zone.addEventListener('click', openDialog);
+  browse.addEventListener('click', (e)=>{ e.stopPropagation(); openDialog(); });
 
-  input.addEventListener('change', () => {
-    if (!input.files || !input.files[0]) return;
-    chip.textContent = `${input.files[0].name} (${Math.round(input.files[0].size/1024)} KB)`;
-    picked.classList.remove('d-none');
-  });
+  // show selected filename
+  function showPicked() {
+    if (input.files && input.files[0]) {
+      picked.textContent = `${input.files[0].name} (${Math.round(input.files[0].size/1024)} KB)`;
+      picked.classList.remove('d-none');
+    }
+  }
+  input.addEventListener('change', showPicked);
 
-  // Drag & drop
-  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-  zone.addEventListener('drop', (e) => {
+  // drag & drop
+  zone.addEventListener('dragover', (e)=>{ e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', ()=> zone.classList.remove('dragover'));
+  zone.addEventListener('drop', (e)=>{
     e.preventDefault(); zone.classList.remove('dragover');
     if (!e.dataTransfer.files.length) return;
     const dt = new DataTransfer();
     dt.items.add(e.dataTransfer.files[0]);
     input.files = dt.files;
-    chip.textContent = `${input.files[0].name} (${Math.round(input.files[0].size/1024)} KB)`;
-    picked.classList.remove('d-none');
+    showPicked();
   });
 }
 
-// -------- submit handler (backend auto-detects "from" type) --------
+// ---------- submit handler (server infers from_type) ----------
 function wireConverterForm(opts) {
   const form = document.getElementById(opts.formId);
   const toSel = document.getElementById(opts.toId);
@@ -75,7 +77,7 @@ function wireConverterForm(opts) {
   const copyBtn = opts.resultIds.copy ? document.getElementById(opts.resultIds.copy) : null;
 
   form.addEventListener('submit', (e) => {
-    e.preventDefault(); // ✅ use the event arg
+    e.preventDefault();
     if (!fileInp.files.length) { alert('Please choose or drop a file.'); return; }
 
     const fd = new FormData();
@@ -139,9 +141,9 @@ function wireConverterForm(opts) {
   });
 }
 
-// ---- wire everything ----
-wireDropzone('imgDrop', 'imgFile', 'imgPicked', acceptForGroup('image'));
-wireDropzone('docDrop', 'docFile', 'docPicked', acceptForGroup('doc'));
+// ----- wire everything -----
+wireDropzone({ zoneId:'imgDrop',  browseId:'imgBrowse',  inputId:'imgFile',  pickedId:'imgPicked', accept:acceptForGroup('image') });
+wireDropzone({ zoneId:'docDrop',  browseId:'docBrowse',  inputId:'docFile',  pickedId:'docPicked', accept:acceptForGroup('doc') });
 
 wireConverterForm({
   formId: 'imageForm',
