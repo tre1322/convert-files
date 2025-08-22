@@ -1,11 +1,12 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Convert Files</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>File Converter</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    body { background: #f1f5f9; font-family: system-ui, sans-serif; }
+    .card { border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     .dropzone {
       border: 2px dashed #cbd5e1;
       border-radius: .5rem;
@@ -14,134 +15,146 @@
       text-align: center;
       cursor: pointer;
       transition: background .15s, border-color .15s;
-      height: 100%;
+      min-height: 150px; /* keeps box visible without stretching */
       display: flex; flex-direction: column; justify-content: center;
     }
     .dropzone.dragover { background: #eef2ff; border-color: #6366f1; }
-    .file-chip { display: inline-block; padding: .25rem .5rem; border-radius: 999px; background: #e2e8f0; font-size: .9rem; }
-    @media (min-width: 992px){ .card-equal { height: 100%; } }
+    .file-chip {
+      display: inline-block;
+      padding: .25rem .5rem;
+      border-radius: 999px;
+      background: #e2e8f0;
+      font-size: .9rem;
+      margin-top: .5rem;
+    }
+    @media (min-width: 992px){
+      .card-equal { height: 100%; }
+    }
   </style>
 </head>
-<body class="bg-light">
-  <div class="container py-4" style="max-width: 1200px;">
-    <header class="mb-4">
-      <h1 class="h3 mb-1">Convert Files</h1>
-      <p class="text-muted mb-0">Drag & drop or browse a file, pick what to convert <em>to</em>, then convert.</p>
-    </header>
-
-    <div class="row g-4">
-      <!-- ========================= IMAGES (LEFT) ========================= -->
-      <div class="col-12 col-lg-6">
-        <form id="imageForm" class="card shadow-sm card-equal">
-          <div class="card-header bg-white"><strong>Images</strong></div>
-          <div class="card-body">
-            <div class="row g-3 align-items-stretch">
-              <!-- Drop/Browse (left) -->
-              <div class="col-md-6">
-                <label class="form-label">Your File</label>
-                <div id="imgDrop" class="dropzone">
-                  <div><strong>Drag & drop image/pdf here</strong></div>
-                  <div class="text-muted small">or click to browse…</div>
-                  <div id="imgPicked" class="mt-2 d-none"><span class="file-chip"></span></div>
-                </div>
-                <!-- IMPORTANT: use visually-hidden (not display:none) so input.click() works -->
-                <input id="imgFile" type="file" class="visually-hidden" />
-                <div class="form-text">Max size: 50 MB.</div>
-              </div>
-
-              <!-- Convert To (right) -->
-              <div class="col-md-6">
-                <label class="form-label">Convert To</label>
-                <select id="imgTo" class="form-select" required>
-                  <optgroup label="Images">
-                    <option>png</option><option>jpg</option><option>jpeg</option>
-                    <option>tif</option><option>tiff</option><option>gif</option>
-                    <option>webp</option><option>bmp</option><option>ico</option>
-                  </optgroup>
-                  <optgroup label="PDF Output"><option>pdf</option></optgroup>
-                </select>
-
-                <!-- Progress -->
-                <div id="imgProgressWrap" class="d-none mt-3">
-                  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-                    <div id="imgProgressBar" class="progress-bar" style="width:0%">0%</div>
-                  </div>
-                  <div id="imgProgressText" class="small text-muted mt-1"></div>
-                </div>
-
-                <div class="d-flex justify-content-end mt-3">
-                  <button class="btn btn-primary" type="submit">Convert Image</button>
-                </div>
+<body>
+<div class="container py-5">
+  <h2 class="mb-4 text-center">File Converter</h2>
+  <div class="row g-4">
+    <!-- Images card -->
+    <div class="col-lg-6">
+      <div class="card card-equal h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Images</h5>
+          <div class="row g-3 align-items-start">
+            <div class="col-6">
+              <div id="imageDrop" class="dropzone">
+                <p class="mb-1">Drag & Drop or Click to Browse</p>
+                <input type="file" id="imageInput" accept="image/*" hidden>
+                <div id="imageFileName" class="file-chip d-none"></div>
               </div>
             </div>
+            <div class="col-6 d-flex flex-column">
+              <label for="imageFormat" class="form-label">Convert To</label>
+              <select id="imageFormat" class="form-select mb-3">
+                <option value="png">PNG</option>
+                <option value="jpg">JPG</option>
+                <option value="webp">WEBP</option>
+                <option value="tiff">TIFF</option>
+              </select>
+              <button class="btn btn-primary mt-auto" onclick="convertFile('image')">Convert Image</button>
+            </div>
           </div>
-        </form>
-
-        <!-- Result (Images) -->
-        <section id="imgResult" class="d-none my-3">
-          <div class="d-flex flex-wrap align-items-center gap-2">
-            <a id="imgDownloadLink" class="btn btn-success" download>Download</a>
-            <button id="imgCopyBtn" class="btn btn-outline-secondary d-none">Copy image to clipboard</button>
-          </div>
-          <div class="mt-3"><img id="imgPreview" class="img-fluid d-none" alt="Preview" /></div>
-        </section>
+        </div>
       </div>
-
-      <!-- ========================= DOCUMENTS (RIGHT) ========================= -->
-      <div class="col-12 col-lg-6">
-        <form id="docForm" class="card shadow-sm card-equal">
-          <div class="card-header bg-white"><strong>Documents</strong></div>
-          <div class="card-body">
-            <div class="row g-3 align-items-stretch">
-              <!-- Drop/Browse (left) -->
-              <div class="col-md-6">
-                <label class="form-label">Your File</label>
-                <div id="docDrop" class="dropzone">
-                  <div><strong>Drag & drop document here</strong></div>
-                  <div class="text-muted small">or click to browse…</div>
-                  <div id="docPicked" class="mt-2 d-none"><span class="file-chip"></span></div>
-                </div>
-                <input id="docFile" type="file" class="visually-hidden" />
-                <div class="form-text">Max size: 50 MB.</div>
-              </div>
-
-              <!-- Convert To (right) -->
-              <div class="col-md-6">
-                <label class="form-label">Convert To</label>
-                <select id="docTo" class="form-select" required>
-                  <option>pdf</option><option>word</option><option>excel</option>
-                  <option>powerpoint</option><option>text</option>
-                </select>
-
-                <div id="docProgressWrap" class="d-none mt-3">
-                  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-                    <div id="docProgressBar" class="progress-bar" style="width:0%">0%</div>
-                  </div>
-                  <div id="docProgressText" class="small text-muted mt-1"></div>
-                </div>
-
-                <div class="alert alert-warning mt-3 mb-0" role="alert" style="font-size:0.95rem">
-                  <strong>Note:</strong> PDF→Word/Excel/PowerPoint are <em>best effort</em> and may alter layout.
-                </div>
-
-                <div class="d-flex justify-content-end mt-3">
-                  <button class="btn btn-primary" type="submit">Convert Document</button>
-                </div>
+    </div>
+    <!-- Documents card -->
+    <div class="col-lg-6">
+      <div class="card card-equal h-100">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Documents</h5>
+          <div class="row g-3 align-items-start">
+            <div class="col-6">
+              <div id="docDrop" class="dropzone">
+                <p class="mb-1">Drag & Drop or Click to Browse</p>
+                <input type="file" id="docInput" accept=".pdf,.doc,.docx,.txt" hidden>
+                <div id="docFileName" class="file-chip d-none"></div>
               </div>
             </div>
+            <div class="col-6 d-flex flex-column">
+              <label for="docFormat" class="form-label">Convert To</label>
+              <select id="docFormat" class="form-select mb-3">
+                <option value="pdf">PDF</option>
+                <option value="docx">DOCX</option>
+                <option value="txt">TXT</option>
+              </select>
+              <button class="btn btn-primary mt-auto" onclick="convertFile('doc')">Convert Document</button>
+            </div>
           </div>
-        </form>
-
-        <!-- Result (Docs) -->
-        <section id="docResult" class="d-none my-3">
-          <div class="d-flex flex-wrap align-items-center gap-2">
-            <a id="docDownloadLink" class="btn btn-success" download>Download</a>
-          </div>
-        </section>
+        </div>
       </div>
     </div>
   </div>
+</div>
 
-  <script src="/static/app.js"></script>
+<script>
+function setupDropzone(dropId, inputId, fileNameId) {
+  const dropzone = document.getElementById(dropId);
+  const input = document.getElementById(inputId);
+  const fileName = document.getElementById(fileNameId);
+
+  dropzone.addEventListener('click', () => input.click());
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+      input.files = e.dataTransfer.files;
+      fileName.textContent = input.files[0].name;
+      fileName.classList.remove('d-none');
+    }
+  });
+  input.addEventListener('change', () => {
+    if (input.files.length) {
+      fileName.textContent = input.files[0].name;
+      fileName.classList.remove('d-none');
+    }
+  });
+}
+
+setupDropzone('imageDrop', 'imageInput', 'imageFileName');
+setupDropzone('docDrop', 'docInput', 'docFileName');
+
+function convertFile(type) {
+  let input, format;
+  if (type === 'image') {
+    input = document.getElementById('imageInput');
+    format = document.getElementById('imageFormat').value;
+  } else {
+    input = document.getElementById('docInput');
+    format = document.getElementById('docFormat').value;
+  }
+  if (!input.files.length) {
+    alert('Please select a file first.');
+    return;
+  }
+  const formData = new FormData();
+  formData.append('file', input.files[0]);
+  formData.append('to', format);
+
+  fetch('/convert', { method: 'POST', body: formData })
+    .then(res => res.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `converted.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    })
+    .catch(err => alert('Conversion failed: ' + err));
+}
+</script>
 </body>
 </html>
